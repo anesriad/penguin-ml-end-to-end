@@ -1,0 +1,5 @@
+pandas
+numpy
+scikit-learn
+fastapi        # if you plan to build the API
+mlflow         # if you plan to track runs
