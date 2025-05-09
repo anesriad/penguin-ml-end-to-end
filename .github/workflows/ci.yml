@@ -21,7 +21,7 @@ jobs:
       run: uv sync
 
     - name: Run tests
-      run: pytest --maxfail=1 --disable-warnings -q
+      run: uv run pytest --maxfail=1 --disable-warnings -q
 
     - name: Build Docker image
       run: docker build -t penguin-ml:end2end .
