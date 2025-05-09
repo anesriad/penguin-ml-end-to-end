@@ -1,0 +1,27 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install UV CLI
+      run: pip install uv-cli
+
+    - name: Sync environment
+      run: uv sync
+
+    - name: Run tests
+      run: pytest --maxfail=1 --disable-warnings -q
+
+    - name: Build Docker image
+      run: docker build -t penguin-ml:end2end .
