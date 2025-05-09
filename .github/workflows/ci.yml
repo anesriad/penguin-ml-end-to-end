@@ -14,8 +14,8 @@ jobs:
       with:
         python-version: 3.11
 
-    - name: Install UV CLI
-      run: pip install uv-cli
+    - name: Install UV
+      run: pip install uv
 
     - name: Sync environment
       run: uv sync
