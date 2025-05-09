@@ -25,3 +25,17 @@ jobs:
 
     - name: Build Docker image
       run: docker build -t penguin-ml:end2end .
+
+          # This part is for pushing the Docker image to Docker Hub
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USER }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Tag and push Docker image
+      run: |
+        IMAGE_NAME=${{ secrets.DOCKERHUB_USER }}/penguin-ml:end2end
+        docker tag penguin-ml:end2end "$IMAGE_NAME"
+        docker push "$IMAGE_NAME"
