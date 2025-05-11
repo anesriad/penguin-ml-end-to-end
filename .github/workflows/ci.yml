@@ -39,18 +39,19 @@ jobs:
         name: Fetch latest MLflow run ID
         run: |
           python - <<EOF
-            import mlflow
-            from mlflow.tracking import MlflowClient
+          import mlflow
+          from mlflow.tracking import MlflowClient
 
-            client = MlflowClient("http://localhost:5001")
-            runs = client.search_runs(
-                experiment_ids=["0"],
-                order_by=["attributes.start_time DESC"],
-                max_results=1
-            )
-            run_id = runs[0].info.run_id
-            print(f"::set-output name=RUN_ID::{run_id}")
+          client = MlflowClient("http://localhost:5001")
+          runs = client.search_runs(
+              experiment_ids=["0"],
+              order_by=["attributes.start_time DESC"],
+              max_results=1
+          )
+          run_id = runs[0].info.run_id
+          print(f"::set-output name=RUN_ID::{run_id}")
           EOF
+
 
       - name: Download model artifact
         run: |
