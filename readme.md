@@ -1,3 +1,5 @@
+![CI](https://github.com/anasriad8/penguin-ml-end-to-end/actions/workflows/ci.yml/badge.svg)
+
 # Penguin ML End-to-End
 
 Simple pipeline to train and serve a model that predicts penguin species.
@@ -28,7 +30,7 @@ Here's a summary of the steps completed up to now:
 4. **Dependency Management (UV)**  
    * Installed `uv-cli`  
    * Ran `uv init --name penguin-ml-end-to-end --python 3.11`  
-   * Added packages with `uv add pandas numpy scikit-learn fastapi mlflow ipykernel pytest`  
+   * Added packages with `uv add pandas numpy scikit-learn fastapi mlflow ipykernel pytest httpx`  
    * Synced and activated the virtual environment (`uv sync` + `source .venv/bin/activate`)  
 
 5. **Dockerfile**  
@@ -75,23 +77,34 @@ Here's a summary of the steps completed up to now:
     * `tests/test_app.py` – endpoint tests with FastAPI’s TestClient  
     * Run with `pytest --maxfail=1 --disable-warnings -q`  
 
+14. **Continuous Integration**  
+    * Added GitHub Actions workflow (`.github/workflows/ci.yml`) to:  
+      * Checkout code  
+      * Set up Python 3.11  
+      * Install UV (`pip install uv`)  
+      * Sync environment (`uv sync`)  
+      * Run tests (`uv run pytest –-maxfail=1 –-disable-warnings -q`)  
+      * Build Docker image (`docker build -t penguin-ml:end2end .`)  
+      * Log in to Docker Hub  
+      * Tag & push image to `anasriad8/penguin-ml:end2end`  
+
 ---
 
 ## Next Steps
 
-1. **Continuous Integration**  
-   * Add a GitHub Actions workflow to install deps, run tests, lint code, and build the Docker image on every push.  
+1. **Add README badge** (done above) for live CI status.  
+2. **Deploy the Docker image**  
+   * Example: Heroku Container Registry  
+     ```bash
+     heroku login
+     heroku container:login
+     heroku create penguin-ml-endpoint
+     heroku container:push web --app penguin-ml-endpoint
+     heroku container:release web --app penguin-ml-endpoint
+     heroku open --app penguin-ml-endpoint
+     ```  
+   * Or use AWS ECS/Fargate, GCP Cloud Run, etc., pointing at `anasriad8/penguin-ml:end2end`.  
+3. **Monitoring & Alerts**  
+   * Add health checks, logging, or integrate Sentry/Prometheus as needed.  
 
-2. **Container Build & Push**  
-   * Automate Docker image build and push to a registry (Docker Hub, ECR, GCR).  
-
-3. **Detailed Documentation**  
-   * Flesh out `README.md` with full setup, usage examples, API docs, and MLflow instructions.  
-
-4. **Deployment**  
-   * Deploy the Docker container to a cloud service (Heroku, AWS ECS/Fargate, GCP Cloud Run).  
-
-5. **Monitoring & Alerts**  
-   * Add basic logs, health checks, and optionally integrate a service like Sentry or Prometheus.
-
-With this in place, anyone can clone the repo, follow the setup steps, and reproduce the entire workflow end to end. ```
+With this README, anyone can clone your repo, check CI, set up locally, run tests, and deploy the full end-to-end pipeline. ```
