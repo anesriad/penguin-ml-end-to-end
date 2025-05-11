@@ -1,4 +1,5 @@
 ![CI](https://github.com/anasriad8/penguin-ml-end-to-end/actions/workflows/ci.yml/badge.svg)
+![Cloud Run](https://img.shields.io/badge/Cloud%20Run--Service-deployed-blue)
 
 # Penguin ML End-to-End
 
@@ -30,7 +31,10 @@ Here's a summary of the steps completed up to now:
 4. **Dependency Management (UV)**  
    * Installed `uv-cli`  
    * Ran `uv init --name penguin-ml-end-to-end --python 3.11`  
-   * Added packages with `uv add pandas numpy scikit-learn fastapi mlflow ipykernel pytest httpx`  
+   * Added packages with  
+     ```bash
+     uv add pandas numpy scikit-learn fastapi mlflow ipykernel pytest httpx
+     ```  
    * Synced and activated the virtual environment (`uv sync` + `source .venv/bin/activate`)  
 
 5. **Dockerfile**  
@@ -75,36 +79,60 @@ Here's a summary of the steps completed up to now:
 13. **Automated Tests**  
     * `tests/test_data_pipeline.py` – unit tests for data loading and preprocessing  
     * `tests/test_app.py` – endpoint tests with FastAPI’s TestClient  
-    * Run with `pytest --maxfail=1 --disable-warnings -q`  
+    * Run with  
+      ```bash
+      pytest --maxfail=1 --disable-warnings -q
+      ```  
 
 14. **Continuous Integration**  
     * Added GitHub Actions workflow (`.github/workflows/ci.yml`) to:  
-      * Checkout code  
-      * Set up Python 3.11  
-      * Install UV (`pip install uv`)  
-      * Sync environment (`uv sync`)  
-      * Run tests (`uv run pytest –-maxfail=1 –-disable-warnings -q`)  
-      * Build Docker image (`docker build -t penguin-ml:end2end .`)  
-      * Log in to Docker Hub  
-      * Tag & push image to `anasriad8/penguin-ml:end2end`  
+      1. Checkout code  
+      2. Set up Python 3.11  
+      3. Install UV (`pip install uv`)  
+      4. Sync environment (`uv sync`)  
+      5. Run tests (`uv run pytest --maxfail=1 --disable-warnings -q`)  
+      6. Build Docker image (`docker build -t penguin-ml:end2end .`)  
+      7. Log in to Docker Hub  
+      8. Tag & push image to `anasriad8/penguin-ml:end2end`  
 
 ---
 
-## Next Steps
+## Deployment
 
-1. **Add README badge** (done above) for live CI status.  
-2. **Deploy the Docker image**  
-   * Example: Heroku Container Registry  
-     ```bash
-     heroku login
-     heroku container:login
-     heroku create penguin-ml-endpoint
-     heroku container:push web --app penguin-ml-endpoint
-     heroku container:release web --app penguin-ml-endpoint
-     heroku open --app penguin-ml-endpoint
-     ```  
-   * Or use AWS ECS/Fargate, GCP Cloud Run, etc., pointing at `anasriad8/penguin-ml:end2end`.  
-3. **Monitoring & Alerts**  
-   * Add health checks, logging, or integrate Sentry/Prometheus as needed.  
+We’ve deployed the container to **GCP Cloud Run**. To reproduce:
 
-With this README, anyone can clone your repo, check CI, set up locally, run tests, and deploy the full end-to-end pipeline. ```
+1. **Build & push an amd64 image**  
+   ```bash
+   # ensure your gcloud is set to the right project
+   PROJECT=$(gcloud config get-value project)
+
+   # create and use a buildx builder
+   docker buildx create --name multiarch-builder --use
+   docker buildx inspect multiarch-builder --bootstrap
+
+   # build & push for linux/amd64
+   docker buildx build \
+     --platform linux/amd64 \
+     --push \
+     -t gcr.io/$PROJECT/penguin-ml:end2end \
+     .
+
+   # Deploy to cloud Run:
+   gcloud run deploy penguin-ml \
+   --image gcr.io/$PROJECT/penguin-ml:end2end \
+   --platform managed \
+   --region us-central1 \
+   --port 8000 \
+   --allow-unauthenticated
+
+   # Test the live endpoint
+      curl -X POST \
+      -H "Content-Type: application/json" \
+      -d '{
+       "culmen_length_mm": 50.0,
+       "culmen_depth_mm": 15.0,
+      "flipper_length_mm": 220.0,
+      "body_mass_g": 4500.0
+      }' \
+      https://<YOUR_URL>/predict
+

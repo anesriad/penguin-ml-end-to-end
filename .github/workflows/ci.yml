@@ -17,7 +17,7 @@ jobs:
           python-version: 3.11
 
       - name: Install UV CLI
-        run: pip install uv-cli
+        run: pip install uv
 
       - name: Sync dependencies
         run: uv sync
