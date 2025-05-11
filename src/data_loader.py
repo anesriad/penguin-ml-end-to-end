@@ -1,21 +1,34 @@
 from pathlib import Path
 import pandas as pd
 
+
 def load_data(
-    raw_path: Path = Path(__file__).parents[1] / "penguins.csv",
-    processed_path: Path = Path(__file__).parents[1] / "data" / "processed" / "penguins_clean.csv",
+    raw_path: Path | str = Path(__file__).parents[1] / "penguins.csv",
+    processed_path: Path | str = Path(__file__).parents[1] / "data" / "processed" / "penguins_clean.csv",
 ) -> pd.DataFrame:
     """
-    Try loading the cleaned (processed) data first; if it doesn't exist,
-    fall back to the raw CSV at the repo root.
+    Load the processed dataset if available, otherwise load the raw CSV.
+
+    Parameters
+    ----------
+    raw_path : Path or str
+        Path to the raw data CSV (repo root)
+    processed_path : Path or str
+        Path to the cleaned data CSV
+
+    Returns
+    -------
+    pd.DataFrame
     """
-    if processed_path.is_file():
-        return pd.read_csv(processed_path)
-    elif raw_path.is_file():
-        return pd.read_csv(raw_path)
-    else:
-        raise FileNotFoundError(
-            f"Could not find either:\n"
-            f" • processed data at {processed_path}\n"
-            f" • raw data at {raw_path}"
-        )
+    # Ensure we have Path objects
+    raw = Path(raw_path)
+    proc = Path(processed_path)
+
+    if proc.is_file():
+        return pd.read_csv(proc)
+    if raw.is_file():
+        return pd.read_csv(raw)
+
+    raise FileNotFoundError(
+        f"Could not find data: neither '{{proc}}' nor '{{raw}}' exists."
+    )
