@@ -43,6 +43,12 @@ jobs:
         with:
           project_id:        ${{ secrets.GCP_PROJECT_ID }}
 
+      # insert this before your “Deploy to Cloud Run” step
+      - name: Build & push to GCR
+        run: |
+          gcloud builds submit . \
+            --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/penguin-ml:end2end
+
 
       # 6) Deploy that image to Cloud Run (managed)
       - name: Deploy to Cloud Run
