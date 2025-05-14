@@ -3,67 +3,52 @@ name: CI & CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Checkout code
+      # 1) Grab your code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2) Setup Python
+      # 2) Set up Python & UV
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 3) Install UV & sync dependencies
       - name: Install UV CLI
-        run: pip install uv
+        run: pip install uv-cli
 
       - name: Sync dependencies
         run: uv sync
 
-      # 4) Run tests
+      # 3) Run your unit tests
       - name: Run tests
         run: uv run pytest --maxfail=1 --disable-warnings -q
 
-      # 5) Build Docker image
-      - name: Build Docker image
-        run: docker build -t anasriad8/penguin-ml:end2end .
-
-      # 6) Push Docker image to Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Push Docker image
-        run: |
-          docker tag anasriad8/penguin-ml:end2end anasriad8/penguin-ml:${{ github.sha }}
-          docker push anasriad8/penguin-ml:end2end
-          docker push anasriad8/penguin-ml:${{ github.sha }}
-
-      # 7) Authenticate to GCP with service account key
+      # 4) Authenticate to GCP using your service-account JSON
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v1
         with:
+          # this is the only key this action accepts:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # 8) Set active GCP project
-      - name: Set GCP project
-        run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+      # 5) Install gcloud, select project, export creds
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id:        ${{ secrets.GCP_PROJECT_ID }}
 
-      # 9) Deploy to Cloud Run
+
+      # 6) Deploy that image to Cloud Run (managed)
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy penguin-ml \
-            --image docker.io/anasriad8/penguin-ml:${{ github.sha }} \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/penguin-ml:end2end \
             --platform managed \
             --region us-central1 \
             --allow-unauthenticated
