@@ -39,10 +39,6 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id:        ${{ secrets.GCP_PROJECT_ID }}
-          install_components: |
-            gcloud
-            beta
-            alpha
 
       # 6) Explicitly activate the SA in gcloud and set your project
       - name: Configure gcloud auth & project
