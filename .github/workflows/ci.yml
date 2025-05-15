@@ -40,7 +40,7 @@ jobs:
         with:
           project_id:        ${{ secrets.GCP_PROJECT_ID }}
 
-      # 6) Explicitly activate the SA in gcloud and set your project
+      ## 6) Explicitly activate the SA in gcloud and set your project
       - name: Configure gcloud auth & project
         run: |
           gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
