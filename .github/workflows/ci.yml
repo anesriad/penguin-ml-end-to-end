@@ -10,34 +10,55 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Checkout & Python/UV setup
-      - uses: actions/checkout@v3
+      # 1) Get your code
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v4
+      # 2) Set up Python & your UV environment
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+      - name: Install UV CLI
+        run: pip install uv
+      - name: Sync dependencies
+        run: uv sync
 
-      - run: pip install uv
-      - run: uv sync
+      # 3) Run your unit tests
+      - name: Run tests
+        run: uv run pytest --maxfail=1 --disable-warnings -q
 
-      # 2) Run your unit tests
-      - run: uv run pytest --maxfail=1 --disable-warnings -q
+      # 4) Authenticate to GCP (writes a creds file and sets GOOGLE_APPLICATION_CREDENTIALS)
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # 3) Authenticate & configure gcloud (incl. Cloud Build + GCR)
-      - name: Authenticate & configure gcloud
+      # 5) Install gcloud
+      - name: Install gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id:          ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
+          project_id:        ${{ secrets.GCP_PROJECT_ID }}
+          install_components: |
+            gcloud
+            beta
+            alpha
 
-      # 4) Build & push your container via Cloud Build → GCR
+      # 6) Explicitly activate the SA in gcloud and set your project
+      - name: Configure gcloud auth & project
+        run: |
+          gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
+          gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
+          # if you ever need to push/pull from GCR:
+          gcloud auth configure-docker --quiet
+
+      # 7) Build & push your container to GCR
       - name: Build & push to GCR
         run: |
           gcloud builds submit . \
             --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/penguin-ml:end2end
 
-      # 5) Deploy that image to Cloud Run (managed)
+      # 8) Deploy that image to Cloud Run
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy penguin-ml \
