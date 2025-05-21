@@ -12,12 +12,37 @@ class PenguinFeatures(BaseModel):
 
 app = FastAPI()
 
-# ————————————————————————————————————————————————————————————————
-# 1) HTML form UI
-# ————————————————————————————————————————————————————————————————
 
-@app.get("/", response_class=HTMLResponse)
-def home():
+# —————————————————————————————————————————————————————————————————————
+# 1) JSON “root” & health check (unchanged from before)
+# —————————————————————————————————————————————————————————————————————
+
+@app.get("/", tags=["api"])
+def root():
+    return {"message": "Penguin ML is running"}
+
+@app.get("/health", tags=["api"])
+def healthcheck():
+    return {"status": "ok"}
+
+
+# —————————————————————————————————————————————————————————————————————
+# 2) JSON predict endpoint (unchanged)
+# —————————————————————————————————————————————————————————————————————
+
+@app.post("/predict", tags=["api"])
+def predict_endpoint(features: PenguinFeatures):
+    data = features.dict()
+    species = predict(data)
+    return {"predicted_species": species}
+
+
+# —————————————————————————————————————————————————————————————————————
+# 3) HTML form UI
+# —————————————————————————————————————————————————————————————————————
+
+@app.get("/ui", response_class=HTMLResponse, tags=["ui"])
+def ui_form():
     return """
     <html>
       <head>
@@ -25,7 +50,7 @@ def home():
       </head>
       <body style="font-family:sans-serif;max-width:600px;margin:auto">
         <h1>Penguin Species Classifier</h1>
-        <form action="/ui-predict" method="post">
+        <form action="/ui" method="post">
           <label>Culmen length (mm):<br/>
             <input name="culmen_length_mm" type="number" step="0.1" required/>
           </label><br/><br/>
@@ -48,7 +73,7 @@ def home():
     </html>
     """
 
-@app.post("/ui-predict", response_class=HTMLResponse)
+@app.post("/ui", response_class=HTMLResponse, tags=["ui"])
 def ui_predict(
     culmen_length_mm:  float = Form(...),
     culmen_depth_mm:   float = Form(...),
@@ -65,26 +90,12 @@ def ui_predict(
     return f"""
     <html>
       <head>
-        <title>Prediction Result</title>
+        <title>🐧 Prediction Result</title>
       </head>
       <body style="font-family:sans-serif;max-width:600px;margin:auto">
         <h1>Predicted species:</h1>
         <p style="font-size:1.5em; font-weight:bold;">{species}</p>
-        <a href="/">⇦ Classify another</a>
+        <a href="/ui">⇦ Classify another</a>
       </body>
     </html>
     """
-
-# ————————————————————————————————————————————————————————————————
-# 2) Your existing JSON API
-# ————————————————————————————————————————————————————————————————
-
-@app.get("/health")
-def healthcheck():
-    return {"status": "ok"}
-
-@app.post("/predict")
-def predict_endpoint(features: PenguinFeatures):
-    data = features.dict()
-    species = predict(data)
-    return {"predicted_species": species}
